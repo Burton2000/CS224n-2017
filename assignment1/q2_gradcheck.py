@@ -13,12 +13,12 @@ def gradcheck_naive(f, x):
          cost and its gradients
     x -- the point (numpy array) to check the gradient at
     """
-
+    
     rndstate = random.getstate()
     random.setstate(rndstate)
     fx, grad = f(x) # Evaluate function value at original point
     h = 1e-4        # Do not change this!
-
+    
     # Iterate over all indexes ix in x to check the gradient.
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
     while not it.finished:
@@ -37,7 +37,16 @@ def gradcheck_naive(f, x):
         # to test cost functions with built in randomness later.
 
         ### YOUR CODE HERE:
-        raise NotImplementedError
+        
+        random.setstate(rndstate)
+        fx_plus_h, _ = f(x[ix] + h)
+        
+        random.setstate(rndstate)
+        fx_minus_h, _ = f(x[ix] - h)
+        
+        # Central difference method.
+        numgrad = (fx_plus_h - fx_minus_h)/(2*h)
+        
         ### END YOUR CODE
 
         # Compare gradients
@@ -76,7 +85,12 @@ def your_sanity_checks():
     """
     print "Running your sanity checks..."
     ### YOUR CODE HERE
-    raise NotImplementedError
+    
+    sin_func = lambda x: (np.sin(x), np.cos(x))
+    
+    gradcheck_naive(sin_func, np.array(823.999))      # scalar test
+    gradcheck_naive(sin_func, np.random.randn(3,))    # 1-D test
+    gradcheck_naive(sin_func, np.random.randn(4,5))   # 2-D test
     ### END YOUR CODE
 
 
