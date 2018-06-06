@@ -58,9 +58,9 @@ def forward_backward_prop(X, labels, params, dimensions):
 
     gradb2 = np.sum(grad_softmax, axis=0)
     gradW2 = np.dot(h.T, grad_softmax)
-    gradX2 = np.dot(grad_softmax, W2.T)
+    gradh = np.dot(grad_softmax, W2.T)
 
-    gradSig1 = gradX2 * sigmoid_grad(h)  # Backprop through sigmoid layer.
+    gradSig1 = gradh * sigmoid_grad(h)  # Backprop through sigmoid layer.
     gradb1 = np.sum(gradSig1, axis=0)
     gradW1 = np.dot(X.T, gradSig1)
 
