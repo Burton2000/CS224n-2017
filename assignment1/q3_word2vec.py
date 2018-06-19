@@ -15,7 +15,10 @@ def normalizeRows(x):
     """
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    # L2 normalize
+    x = x / np.sqrt(np.sum(x**2, axis=1))[:, np.newaxis]
+
     ### END YOUR CODE
 
     return x
@@ -58,7 +61,22 @@ def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
     """
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    # Output vectors is the matrix that produces context word vector.
+    y_hat = softmax(np.dot(outputVectors, predicted))
+
+    # Make one hot vector of labels.
+    labels = np.zeros_like(y_hat)
+    labels[target] = 1
+
+    # Cross entropy loss.
+    cost = -np.sum(np.log(y_hat)*labels)  # -np.log(y_hat[target])
+
+    grad_softmax = y_hat - labels
+
+    gradPred = np.dot(grad_softmax.T, outputVectors)
+    grad = np.dot(grad_softmax[:, np.newaxis], predicted[np.newaxis, :])  # Need to add singleton dimensions so we can matrix multiply.
+
     ### END YOUR CODE
 
     return cost, gradPred, grad
@@ -96,7 +114,24 @@ def negSamplingCostAndGradient(predicted, target, outputVectors, dataset,
     indices.extend(getNegativeSamples(target, dataset, K))
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    # Output vectors of the K negative samples.
+    neg_samples = outputVectors[indices[1:]]
+
+    #  The Output probabilities for target and K negative samples.
+    sig_out = sigmoid(np.dot(outputVectors[target], predicted))
+    sig_neg_samples_out = sigmoid(-np.dot(outputVectors[indices[1:]], predicted))
+
+    cost = -np.log(sig_out) - np.sum(np.log(sig_neg_samples_out))
+
+    gradPred = (sig_out - 1)*outputVectors[target] - np.sum((sig_neg_samples_out - 1)[:, np.newaxis] * neg_samples, axis=0)  # We sum across each negative sample.
+
+    grad = np.zeros_like(outputVectors)
+    grad[target, :] = (sig_out - 1) * predicted
+
+    for i, neg_sample_idx in enumerate(indices[1:]):
+        grad[neg_sample_idx, :] += -(sig_neg_samples_out[i] - 1) * predicted
+
     ### END YOUR CODE
 
     return cost, gradPred, grad
@@ -131,7 +166,22 @@ def skipgram(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradOut = np.zeros(outputVectors.shape)
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    centre_word_index = tokens[currentWord]
+    centre_word_predicted = inputVectors[centre_word_index]  # Get predicted word vector for the current centre word.
+
+    # Iterate over all the context words calculating and accumulating gradients for each.
+    for current_context_word in contextWords:
+        index_current_context_word = tokens[current_context_word]
+
+        # Calculate cost and gradients for the current context word.
+        current_word_cost, current_word_gradPred, current_word_grad = word2vecCostAndGradient(
+            centre_word_predicted, index_current_context_word, outputVectors, dataset)
+
+        cost += current_word_cost
+        gradIn[centre_word_index] += current_word_gradPred  # Update gradient only for the centre word.
+        gradOut += current_word_grad
+
     ### END YOUR CODE
 
     return cost, gradIn, gradOut
@@ -155,7 +205,19 @@ def cbow(currentWord, C, contextWords, tokens, inputVectors, outputVectors,
     gradOut = np.zeros(outputVectors.shape)
 
     ### YOUR CODE HERE
-    raise NotImplementedError
+
+    # In CBOW the target is the centre word.
+    target_word_index = tokens[currentWord]
+
+    # Sum up the word vectors for all context words.
+    context_sum = np.sum((inputVectors[tokens[c_word]] for c_word in contextWords), axis=0)
+
+    cost, gradPred, gradOut = word2vecCostAndGradient(context_sum, target_word_index, outputVectors, dataset)
+
+    # Update gradient for each context word.
+    for w in contextWords:
+        gradIn[tokens[w]] += gradPred
+
     ### END YOUR CODE
 
     return cost, gradIn, gradOut
