@@ -1,5 +1,5 @@
 # CS224n - 2017
-These are my solutions to the CS224n 2017 course from Stanford University http://web.stanford.edu/class/cs224n/. 
+These are my solutions to the coding parts of CS224n 2017 course assignments from Stanford University http://web.stanford.edu/class/cs224n/. 
 I am working through all the assignments to improve my understanding of NLP and deep learning.
 
 ## Completed
